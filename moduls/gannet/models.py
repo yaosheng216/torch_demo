@@ -5,6 +5,9 @@ import torch.nn.functional as F
 class ResBlock(nn.Module):
     def __init__(self, in_channel):
         super(ResBlock, self).__init__()
+        # nn.ReflectionPad1d:对一维输入进行反射填充,反射填充是指在输入张量的边缘使用其自身的反射进行填充
+        # nn.InstanceNorm2d:实例化归一层
+        # nn.ReLU(inplace=True):对输入张量应用ReLU激活函数，inplace=True 的作用是直接在输入张量上进行操作，而不返回新的张量，节省内存
         conv_block = [nn.ReflectionPad1d(1),
                       nn.Conv2d(in_channel, in_channel, 3),
                       nn.InstanceNorm2d(in_channel),
@@ -12,6 +15,7 @@ class ResBlock(nn.Module):
                       nn.ReflectionPad1d(1),
                       nn.Conv2d(in_channel, in_channel, 3),
                       nn.InstanceNorm2d(in_channel)]
+        # nn.Sequential:将多个神经网络层按顺序排列
         self.conv_block = nn.Sequential(*conv_block)
 
     def forward(self, x):
@@ -42,6 +46,7 @@ class GeneratorNet(nn.Module):
         # 上采样
         out_channel = in_channel // 2
         for _ in range(2):
+            # nn.ConvTranspose2d:用于实现二维的转置卷积（也称为反卷积或上采样卷积），转置卷积通常用于生成模型和自动编码器中，从低维度的特征图生成高维度的图像
             net += [nn.ConvTranspose2d(in_channel, out_channel, 3, stride=2, padding=1, output_padding=2),
                     nn.InstanceNorm2d(out_channel),
                     nn.ReLU(inplace=True)]
