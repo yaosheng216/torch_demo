@@ -6,11 +6,12 @@ from utils import showPlot, timeSince
 from dataset import readLangs, SOS_token, EOS_token
 from model import EncoderRNN, AttendDecoderRNN
 import time
+
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 MAX_LENGTH = 11
-
 teacher_forcing_ratio = 0.5
-
 lang1 = "en"
 lang2 = "cn"
 path = "data/en-cn.txt"
@@ -117,7 +118,7 @@ def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer,
                                   < teacher_forcing_ratio else False
 
     if use_teacher_forcing:
-        # Teacher forcing: Feed the targer as the next input
+        # Teacher forcing: Feed the target as the next input
         for di in range(target_length):
             decoder_output, decoder_hidden, decoder_attention = decoder(
                 decoder_input, decoder_hidden, encoder_outputs)
@@ -128,7 +129,7 @@ def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer,
         for di in range(target_length):
             decoder_output, decoder_hidden, decoder_attention = decoder(
                 decoder_input, decoder_hidden, encoder_outputs)
-            topv, topi = decoder_output.topk(1)
+            topV, topi = decoder_output.topk(1)
             decoder_input = topi.squeeze().detach()
             # detach from history as input
 
@@ -147,12 +148,10 @@ def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
         input_tensor = tensorFromSentence(input_lang, sentence)
         input_length = input_tensor.size()[0]
         encoder_hidden = encoder.initHidden()
-
         encoder_outputs = torch.zeros(max_length, encoder.hidden_size, device=device)
 
         for ei in range(input_length):
-            encoder_output, encoder_hidden = encoder(input_tensor[ei],
-                                                     encoder_hidden)
+            encoder_output, encoder_hidden = encoder(input_tensor[ei], encoder_hidden)
             encoder_outputs[ei] += encoder_output[0, 0]
 
         decoder_input = torch.tensor([[SOS_token]], device=device)  # SOS
@@ -190,5 +189,5 @@ def evaluateRandomly(encoder, decoder, n=10):
 hidden_size = 256
 encoder1 = EncoderRNN(input_lang.n_words, hidden_size).to(device)
 attn_decoder1 = AttendDecoderRNN(hidden_size, output_lang.n_words,
-                                max_len=MAX_LENGTH, dropout_p=0.1).to(device)
+                                 max_len=MAX_LENGTH, dropout_p=0.1).to(device)
 trainIters(encoder1, attn_decoder1, 1000000, save_every=20000, print_every=5000)

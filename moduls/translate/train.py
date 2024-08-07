@@ -6,10 +6,11 @@ from dataset import readLangs, SOS_token, EOS_token, MAX_LENGTH
 from model import EncoderRNN, AttendDecoderRNN
 from utils import timeSince
 import time
+
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 MAX_LENGTH = MAX_LENGTH + 1
-
 lang1 = "en"
 lang2 = "cn"
 path = "data/en-cn.txt"
@@ -59,7 +60,6 @@ def loss_func(input_tensor, output_tensor, encoder, decoder, encoder_optimizer,
             decoder_output, decoder_hidden, decoder_attention = decoder(
                 decoder_input, decoder_hidden, encoder_outputs
             )
-
             loss += criterion(decoder_output, output_tensor[di])
             decoder_input = output_tensor[di]
     else:
@@ -75,6 +75,7 @@ def loss_func(input_tensor, output_tensor, encoder, decoder, encoder_optimizer,
             if decoder_input.item() == EOS_token:
                 break
 
+    # 梯度传播
     loss.backward()
     encoder_optimizer.step()
     decoder_optimizer.step()
@@ -84,9 +85,9 @@ def loss_func(input_tensor, output_tensor, encoder, decoder, encoder_optimizer,
 hidden_size = 256
 encoder = EncoderRNN(input_lang.n_words, hidden_size).to(device)
 decoder = AttendDecoderRNN(hidden_size,
-                          output_lang.n_words,
-                          max_len=MAX_LENGTH,
-                          dropout_p=0.1).to(device)
+                           output_lang.n_words,
+                           max_len=MAX_LENGTH,
+                           dropout_p=0.1).to(device)
 
 lr = 0.01
 encoder_optimizer = optim.SGD(encoder.parameters(), lr=lr)

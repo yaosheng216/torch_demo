@@ -2,6 +2,7 @@ import jieba
 from utils import normalizeString
 from utils import cht_to_chs
 
+
 SOS_token = 0
 EOS_token = 1
 MAX_LENGTH = 10

@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-plt.switch_backend('agg')
+from moduls.translate.langconv import Converter
 import matplotlib.ticker as ticker
 import time
 import math
@@ -7,6 +7,9 @@ import unicodedata
 import string
 import re
 from langconv import *
+
+
+plt.switch_backend('agg')
 
 
 # Turn a Unicode string to plain ASCII, thanks to
