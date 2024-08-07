@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 class Solution:
-
     def numberOfPairs(self, nums1, nums2, k):
         nums1_count = defaultdict(int)
         for num in nums1:
