@@ -11,7 +11,6 @@ import time
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 MAX_LENGTH = MAX_LENGTH + 1
-
 lang1 = "en"
 lang2 = "cn"
 path = "data/en-cn.txt"

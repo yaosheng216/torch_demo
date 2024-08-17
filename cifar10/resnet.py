@@ -20,6 +20,7 @@ class ResBlock(nn.Module):
                 nn.BatchNorm2d(out_channel)
             )
 
+    # 前向传播
     def forward(self, x):
         out1 = self.left(x)
         out2 = self.shortcut(x)
