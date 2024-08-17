@@ -11,8 +11,11 @@ from cifar10.inception import InceptionNetSmall
 
 # 是否使用GPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-epoch_num = 200
+# 训练轮数
+epoch_num = 2000
+# 学习率
 lr = 0.01
+
 batch_size = 128
 
 net = InceptionNetSmall().to(device)
@@ -20,11 +23,11 @@ net = InceptionNetSmall().to(device)
 # loss
 loss_func = nn.CrossEntropyLoss()
 
-# 优化器
+# 优化器（根据计算出的梯度更新每一层的权重和偏置）
 optimizer = torch.optim.Adam(net.parameters(), lr=lr)
 # optimizer = torch.optim.SGD(net.parameters(), lr=lr, momentum=0.9, weight_decay=5e-4)
 
-# 调整学习率
+# 调整学习率（学习率优化策略）
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.9)
 
 if not os.path.exists('logs'):
@@ -77,6 +80,7 @@ if __name__ == '__main__':
             inputs, labels = inputs.to(device), labels.to(device)
 
             outputs = net(inputs)
+            # 损失函数计算
             loss = loss_func(outputs, labels)
 
             _, pred = torch.max(outputs.data, dim=1)
