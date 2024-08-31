@@ -7,7 +7,7 @@ import torch.utils.data as data_utils
 train_data = dataset.MNIST(root='mnist', train=True, transform=transforms.ToTensor, download=True)
 test_data = dataset.MNIST(root='mnist', train=False, transform=transforms.ToTensor, download=False)
 
-# batchsize
+# batch_size
 train_loader = data_utils.DataLoader(dataset=train_data, batch_size=64, shuffle=True)
 test_loader = data_utils.DataLoader(dataset=test_data, batch_size=64, shuffle=True)
 
@@ -20,11 +20,13 @@ class CNN(torch.nn.Module):
                                         torch.nn.BatchNorm2d(32),
                                         torch.nn.ReLU(),
                                         torch.nn.MaxPool2d(2))
-
+        # out_features: 输出特征值
         self.fc = torch.nn.Linear(14 * 14 * 32, 10)
 
+    # PyTorch中tensor的序列是: n * c * w
     def forward(self, x):
         out = self.conv(x)
+        # 修改tensor的shape
         out = out.View(out.size()[0], -1)
         out = self.fc(out)
         return out
@@ -39,7 +41,7 @@ loss_func = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(cnn.parameters(), lr=0.01)
 
 # training
-for epoch in range(10):
+for epoch in range(10000):
     for i, (images, labels) in enumerate(train_loader):
         images = images.cuda()
         labels = labels.cuda()
@@ -50,7 +52,7 @@ for epoch in range(10):
         optimizer.zero_grad()
         loss.forward()
         optimizer.step()
-        print('epoch is:{}, ite is: {}/{}, loss is:{}'.format(
+        print('epoch is:{}, item is: {}/{}, loss is:{}'.format(
             epoch + 1, i, len(train_data) // 64, loss.item()))
 
     # test
@@ -61,8 +63,8 @@ for epoch in range(10):
         labels = labels.cuda()
 
         output = cnn(images)
-        # [batchsize]
-        # output = batchsize * cls_num
+        # [batch_size]
+        # output = batch_size * cls_num
         loss_test += loss_func(output, labels)
         _, pred = output.max(1)
         accuracy = (pred == labels).sum().item
