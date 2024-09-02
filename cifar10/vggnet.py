@@ -54,7 +54,7 @@ class VGGBase(nn.Module):
         # self.max_pooling5 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         # 全连接层
-        # batchsize = 512 * 2 * 2 --> batchsize * (512 * 4)
+        # batch_size = 512 * 2 * 2 --> batch_size * (512 * 4)
         self.fc = nn.Linear(512 * 4, 10)
 
     def forward(self, x):

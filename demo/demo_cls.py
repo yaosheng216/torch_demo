@@ -3,6 +3,7 @@ import torchvision.datasets as dataset
 import torchvision.transforms as transforms
 import torch.utils.data as data_utils
 
+# torchvision.dataset自动实现了数据标签映射
 # data
 train_data = dataset.MNIST(root='mnist', train=True, transform=transforms.ToTensor, download=True)
 test_data = dataset.MNIST(root='mnist', train=False, transform=transforms.ToTensor, download=False)
