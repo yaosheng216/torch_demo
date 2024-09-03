@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch import optim
-from models import Model
+from model import Model
 from dataset import data_loader, text_ClS
 from config import Config
 
