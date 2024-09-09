@@ -25,6 +25,7 @@ def default_loader(path):
 #                                       transforms.ToTensor()
 #                                       ])
 
+# 数据增强
 train_transform = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip(),
