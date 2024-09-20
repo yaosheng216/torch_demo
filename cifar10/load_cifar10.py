@@ -45,18 +45,18 @@ test_transform = transforms.Compose([
 class MyDataset(Dataset):
     def __init__(self, im_list, transform=None, loader=default_loader):
         super(MyDataset, self).__init__()
-        imgs = []
+        img = []
 
         for im_item in im_list:
             im_label_name = im_item.split('/')[-2]
-            imgs.append([im_item, label_dict[im_label_name]])
+            img.append([im_item, label_dict[im_label_name]])
 
-        self.imgs = imgs
+        self.img = img
         self.transform = transform
         self.loader = loader
 
     def __getitem__(self, index):
-        im_path, im_label, = self.imgs[index]
+        im_path, im_label, = self.img[index]
         im_data = self.loader(im_path)
 
         if self.transform is not None:
@@ -64,7 +64,7 @@ class MyDataset(Dataset):
         return im_data, im_label
 
     def __len__(self):
-        return len(self.imgs)
+        return len(self.img)
 
 
 im_train_list = glob.glob('/Users/great/Downloads/dataset/CIFAR10/TRAIN/*/*.png')

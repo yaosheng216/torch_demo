@@ -22,8 +22,8 @@ y_train = y[0:496, ...]
 x_test = x[496:, ...]
 y_test = y[496:, ...]
 
-print(x_train.shape)
-print(y_train.shape)
+print(x_train)
+print(y_train)
 print(x_test.shape)
 print(y_test.shape)
 
