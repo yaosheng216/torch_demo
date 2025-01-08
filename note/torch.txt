@@ -67,3 +67,11 @@
 22.torch.log: 对tensor的每个元素计算自然对数（natural logarithm）。换句话说，它计算的是以 e（欧拉数，约等于 2.71828）为底的对数
 
 23.torch.mm: 对两个二维张量（矩阵）执行矩阵乘法操作，torch.mm 的输入必须都是二维张量，即每个输入都是一个矩阵
+
+24.torch.cumprod: 计算tensor中所以元素的累计乘积
+
+25.torch.rsqrt: 计算tensor的平方根的倒数
+
+26.torch.mean: 用于计算tensor元素平均值的函数。它可以计算整个张量的平均值，或沿指定维度计算平均值
+
+27.torch.nn.functional.scaled_dot_product_attention: 在PyTorch中通常用于计算点积缩放（注意力计算）
