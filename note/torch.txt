@@ -75,3 +75,5 @@
 26.torch.mean: 用于计算tensor元素平均值的函数。它可以计算整个张量的平均值，或沿指定维度计算平均值
 
 27.torch.nn.functional.scaled_dot_product_attention: 在PyTorch中通常用于计算点积缩放（注意力计算）
+
+28.torch.unbind: 对tensor沿着维度进行切分，默认dim=0
