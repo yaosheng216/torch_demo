@@ -1,0 +1,119 @@
+1.跨服务器分布式数据并行
+    1️⃣适用场景: 模型可以完整加载到单个GPU显存中，通过切分数据实现并行
+    2️⃣环境配置要求:  - 网络互通（建议万兆以上带宽）
+                   - 同步时钟（使用ntp服务）
+                   - 共享训练代码和数据（推荐NFS挂载）
+                   - 安装相同版本的PyTorch（>=1.9）和CUDA
+    3️⃣PyTorch代码:
+      import torch
+      import torch.distributed as dist
+      from torch.nn.parallel import DistributedDataParallel as DDP
+
+      def main():
+      # 初始化分布式环境
+      dist.init_process_group(
+        backend='nccl',  # 推荐NCCL后端
+        init_method='env://'
+      )
+
+      # 创建模型
+      model = MyModel().cuda()
+      ddp_model = DDP(model, device_ids=[local_rank])
+
+      # 数据加载器（自动shard数据）
+      train_sampler = DistributedSampler(dataset)
+      dataloader = DataLoader(dataset, sampler=train_sampler)
+
+      # 训练循环
+      for epoch in range(epochs):
+        for batch in dataloader:
+            inputs = batch[0].cuda()
+            labels = batch[1].cuda()
+
+            outputs = ddp_model(inputs)
+            loss = criterion(outputs, labels)
+
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+    4️⃣启动命令:
+      # Server 1
+      python -m torch.distributed.launch \
+             --nproc_per_node=1 \
+             --nnodes=2 \
+             --node_rank=0 \
+             --master_addr="192.168.1.100" \
+             --master_port=29500 \
+             train.py
+
+      # Server 2
+      python -m torch.distributed.launch \
+             --nproc_per_node=1 \
+             --nnodes=2 \
+             --node_rank=1 \
+             --master_addr="192.168.1.100" \
+             --master_port=29500 \
+             train.py
+
+二、跨服务器模型并行
+    1️⃣适用场景: 模型过大无法单卡存放，需拆分到不同服务器
+    2️⃣模型拆分示例
+        # Server 1: 前半部分模型
+        class ModelPart1(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.layer1 = ...
+
+            def forward(self, x):
+                x = self.layer1(x)
+                # 将中间结果发送到Server2
+                dist.send(tensor=x, dst=1)
+                return x
+
+        # Server 2: 后半部分模型
+        class ModelPart2(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.layer2 = ...
+
+            def forward(self, x):
+                # 接收来自Server1的数据
+                tensor = torch.zeros_like(...)
+                dist.recv(tensor, src=0)
+                return self.layer2(tensor)
+    3️⃣通信优化技巧:
+        # 使用梯度累积减少通信频率
+        with torch.no_grad():
+            # 异步传输中间结果
+            handle = dist.isend(tensor, dst=1)
+            # 并行执行其他计算
+            ...
+            handle.wait()
+    4️⃣ |  参数	                       | 推荐值   |   作用说明               |
+       | backend                     |	nccl   | NVIDIA优化的通信后端      |
+       | init_method                 |	env:// | 通过环境变量初始化         |
+       | gradient_accumulation_steps |	4      | 减少通信频率的梯度累积步数  |
+       | NCCL_DEBUG                  |	INFO   | 调试NCCL通信问题          |
+       | NCCL_SOCKET_IFNAME          |	eth0   | 指定网络接口（多网卡时需要） |
+    5️⃣性能优化建议:
+        # 使用梯度压缩（需PyTorch 1.8+）
+        ddp_model = DDP(model,
+                        device_ids=[local_rank],
+                        gradient_as_bucket_view=True)  # 减少内存拷贝
+    6️⃣混合精度训练:
+      from torch.cuda.amp import autocast
+      scaler = GradScaler()
+
+      with autocast():
+        outputs = model(inputs)
+        loss = criterion(outputs, labels)
+
+      scaler.scale(loss).backward()
+      scaler.step(optimizer)
+      scaler.update()
+    7️⃣性能基准:
+    |    配置	      |  吞吐量（samples/sec） |  通信开销占比 ｜
+    |    单卡       |	  1200	             |   0%        ｜
+    |    单机多卡    |	  2200               |	8-12%      ｜
+    |    分布式训练  |	  1800	             |   25-35%    ｜
+    8️⃣实际部署时建议使用Kubernetes或SLURM等集群管理工具进行自动化部署
