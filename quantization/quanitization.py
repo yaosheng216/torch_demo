@@ -1,19 +1,55 @@
+from neural_compressor import PostTrainingQuantConfig, quantization
+from safetensors import safe_open
+from compressed_tensors import save_compressed, QuantizationConfig
 import torch
 
 
-model = torch.load('/mnt/data/yaosheng/test/models/test1.pth')
-# 动态量化
-model_int8 = torch.ao.quantization.quantize_dynamic(
-    model, {torch.nn.Linear}, dtype=torch.qint8
+# 加载 safetensors 模型
+model_weights = {}
+with safe_open("flux1-kontext-dev.safetensors", framework="pt") as f:
+    for key in f.keys():
+        model_weights[key] = f.get_tensor(key)
+
+
+class CustomModel(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.linear = torch.nn.Linear(512, 256)
+        self.linear.weight.data = model_weights["linear.weight"]  # 加载权重
+
+    def forward(self, x):
+        return self.linear(x)
+
+
+model = CustomModel().eval()
+
+# 配置 FP8 量化 (推荐 E4M3 格式)
+fp8_config = PostTrainingQuantConfig(
+    approach="post_training_static_quant",
+    backend="fx",  # 使用 PyTorch FX 模式
+    quant_format="fp8",  # 指定 FP8 格式
+    recipes={"fp8_format": "E4M3"}
 )
-'''
-    tensor([[-0.8211, 0.1416, 0.9627],
-        [-1.9537, 0.5380, 1.6989],
-        [-3.6243, 1.7555, 1.6423], size=[3, 3], dtype=torch.qint8,
-        quantization_scheme=torch.per_tensor_affine, scale=0.028314674273133278,
-        zero_point=0)
-'''
-# 打印量化后的模型权重(int8)
-print(torch.int_repr(model_int8.linear.weight))
-# 反量化后的模型权重
-print(model_int8.linear.weight())
+
+calib_dataset = [...]
+q_model = quantization.fit(
+    model=model,
+    conf=fp8_config,
+    calib_dataloader=torch.utils.data.DataLoader(calib_dataset, batch_size=32)
+)
+
+# 保存为 safetensors 格式
+quant_config = QuantizationConfig.from_dict({
+    "quantization": {
+        "weights": {
+            "format": "fp8_e4m3",  # 与量化配置一致
+            "bits": 8,
+            "group_size": 128  # 可选分组量化
+        }
+    }
+})
+save_compressed(
+    q_model.model.state_dict(),
+    "quantized_model.safetensors",
+    quantization_config=quant_config
+)
